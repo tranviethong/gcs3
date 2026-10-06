@@ -22,7 +22,7 @@ input,select,button{padding:6px 10px;font-size:14px;border-radius:5px;border:1px
 .ptitle{display:none}
 @page{size:A4;margin:12mm}
 @media print{*{-webkit-print-color-adjust:exact;print-color-adjust:exact}header,#drop,.noprint{display:none}body{background:#fff}main{padding:0;max-width:none}section{box-shadow:none;border:1px solid #bbb;margin:8px 0;break-inside:avoid}td{padding:3px 10px;font-size:12px}section h2{padding:5px 10px;font-size:13px}.ptitle{display:block;text-align:center;margin-bottom:6px}.ptitle b{font-size:18px}.ptitle small{display:block;color:#555}}
-.pdf{position:fixed;left:-10000px;top:0;width:720px;background:#fff;padding:0}
+.pdf{width:720px;background:#fff;color:#1c2430;font-family:Segoe UI,Arial,sans-serif}
 .pdf .ptitle{display:block;text-align:center;margin-bottom:6px}.pdf .ptitle b{font-size:18px}.pdf .ptitle small{display:block;color:#555}
 .pdf section{box-shadow:none;border:1px solid #bbb;margin:8px 0}.pdf td{padding:3px 10px;font-size:12px}.pdf section h2{padding:5px 10px;font-size:13px}
 </style></head><body>
@@ -99,8 +99,8 @@ async function exportPdf(){
  const el=document.createElement("div");el.className="pdf";el.innerHTML=$("out").innerHTML;
  el.querySelectorAll("tr.hide").forEach(r=>r.remove());
  el.querySelectorAll("section").forEach(x=>{if(!x.querySelector("tr"))x.remove()});
- document.body.appendChild(el);b.disabled=true;b.textContent="Đang tạo PDF...";
+ const wrap=document.createElement("div");wrap.style.cssText="position:fixed;left:-10000px;top:0";wrap.appendChild(el);document.body.appendChild(wrap);b.disabled=true;b.textContent="Đang tạo PDF...";
  try{await html2pdf().set({margin:[10,10,10,10],filename:docs[i].name.replace(/\.xml.*$/i,"")+".pdf",image:{type:"jpeg",quality:.98},html2canvas:{scale:2,backgroundColor:"#fff"},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css"],avoid:"section"}}).from(el).save()}
  catch(e){alert("Không tạo được PDF: "+e.message)}
- el.remove();b.disabled=false;b.textContent=t}
+ wrap.remove();b.disabled=false;b.textContent=t}
 </script></body></html>
