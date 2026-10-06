@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Xem Giấy chứng sinh (XML)</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;margin:0;background:#f3f5f8;color:#1c2430}
+header{background:#14507a;color:#fff;padding:12px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+header h1{font-size:18px;margin:0;flex:1}
+#drop{margin:20px;padding:36px;border:2px dashed #14507a;border-radius:10px;text-align:center;background:#fff;cursor:pointer}
+#drop.on{background:#e3f1fb}
+main{padding:0 20px 30px;max-width:1100px;margin:auto}
+section{background:#fff;border-radius:8px;margin:14px 0;box-shadow:0 1px 3px #0002;overflow:hidden}
+section h2{margin:0;padding:8px 14px;background:#e6eef5;font-size:15px;color:#14507a}
+table{width:100%;border-collapse:collapse}
+td{padding:6px 14px;border-top:1px solid #eef0f3;vertical-align:top;font-size:14px}
+td:first-child{width:38%;color:#556}
+td:last-child{font-weight:600;word-break:break-word}
+tr.hide{display:none}
+mark{background:#ffe27a}
+input,select,button{padding:6px 10px;font-size:14px;border-radius:5px;border:1px solid #ccd}
+.ok{color:#0a7d33}.warn{color:#b35c00}
+.ptitle{display:none}
+@page{size:A4;margin:12mm}
+@media print{*{-webkit-print-color-adjust:exact;print-color-adjust:exact}header,#drop,.noprint{display:none}body{background:#fff}main{padding:0;max-width:none}section{box-shadow:none;border:1px solid #bbb;margin:8px 0;break-inside:avoid}td{padding:3px 10px;font-size:12px}section h2{padding:5px 10px;font-size:13px}.ptitle{display:block;text-align:center;margin-bottom:6px}.ptitle b{font-size:18px}.ptitle small{display:block;color:#555}}
+</style></head><body>
+<header><h1>Xem Giấy chứng sinh (file XML)</h1>
+<select id="sel" style="display:none"></select>
+<input id="q" placeholder="Tìm trong hồ sơ..." style="display:none">
+<button id="pr" class="noprint" style="display:none" onclick="print()">Xuất PDF / In</button></header>
+<div id="drop">Kéo thả một hoặc nhiều file <b>.xml</b> vào đây, hoặc bấm để chọn file<br><small>Dữ liệu chỉ xử lý trên máy bạn, không tải lên mạng.</small>
+<input type="file" id="f" accept=".xml" multiple hidden></div>
+<main id="out"></main>
+<script>
+const L={
+MA_GCS:"Mã giấy chứng sinh",MA_BN:"Mã bệnh nhân",MA_CT:"Mã cơ sở/chứng từ",SO_SERI:"Số seri",CAP_LAN_DAU:"Cấp lần đầu (1: lần đầu)",
+SO:"Số",QUYEN_SO:"Quyển số",NGAY_CT:"Ngày chứng từ",MA_TTDV:"Mã thủ trưởng đơn vị",THU_TRUONG_DVI:"Thủ trưởng đơn vị",NGUOI_DO_DE:"Người đỡ đẻ",NGUOI_GHI_PHIEU:"Người ghi phiếu",GHI_CHU:"Ghi chú",
+TEN_CON:"Tên con",GIOI_TINH_CON:"Giới tính con",SO_CON:"Số con",LAN_SINH:"Lần sinh",SO_CON_SONG:"Số con sống",CAN_NANG_CON:"Cân nặng con (g)",NGAY_SINH_CON:"Ngày giờ sinh",NOI_SINH_CON:"Nơi sinh (mã)",TINH_TRANG_CON:"Tình trạng con",SINHCON_PHAUTHUAT:"Sinh con phẫu thuật",SINHCON_DUOI32TUAN:"Sinh con dưới 32 tuần",MA_THE_TAM:"Mã thẻ tạm của con",
+MA_BHXH_NND:"Mã BHXH",MA_THE_NND:"Mã thẻ BHYT",HOTEN_NND:"Họ tên",NGAYSINH_NND:"Ngày sinh",MA_DANTOC_NND:"Dân tộc (mã)",MA_QUOCTICH_NND:"Quốc tịch (mã)",LOAI_GIAYTO_NND:"Loại giấy tờ",SO_CCCD_NND:"Số CCCD",NGAYCAP_CCCD_NND:"Ngày cấp",NOICAP_CCCD_NND:"Nơi cấp",NOI_CU_TRU_NND:"Nơi cư trú",MATINH_CU_TRU:"Mã tỉnh cư trú",MAHUYEN_CU_TRU:"Mã huyện cư trú",MAXA_CU_TRU:"Mã xã cư trú",
+HO_TEN_CHA:"Họ tên cha",NGAYSINH_CHA_NND:"Ngày sinh cha",MA_DANTOC_CHA_NND:"Dân tộc cha (mã)",LOAI_GIAYTO_CHA_NND:"Loại giấy tờ cha",SO_CCCD_CHA_NND:"Số CCCD cha",NGAYCAP_CCCD_CHA_NND:"Ngày cấp CCCD cha",NOICAP_CCCD_CHA_NND:"Nơi cấp CCCD cha",
+MA_BHXH_MTH:"Mã BHXH",MA_THE_MTH:"Mã thẻ BHYT",HOTEN_MTH:"Họ tên",NGAYSINH_MTH:"Ngày sinh",MA_DANTOC_MTH:"Dân tộc (mã)",MA_QUOCTICH_MTH:"Quốc tịch (mã)",LOAI_GIAYTO_MTH:"Loại giấy tờ",SO_CCCD_MTH:"Số CCCD",NGAYCAP_CCCD_MTH:"Ngày cấp",NOICAP_CCCD_MTH:"Nơi cấp",NOI_CU_TRU_MTH:"Nơi cư trú",MATINH_CU_TRU_MTH:"Mã tỉnh cư trú",MAXA_CU_TRU_MTH:"Mã xã cư trú",
+HO_TEN_CHA_MTH:"Họ tên cha",NGAYSINH_CHA_MTH:"Ngày sinh cha",MA_DANTOC_CHA_MTH:"Dân tộc cha (mã)",NOI_CU_TRU_CHA_MTH:"Nơi cư trú cha",MATINH_CU_TRU_CHA_MTH:"Mã tỉnh cư trú cha",MAXA_CU_TRU_CHA_MTH:"Mã xã cư trú cha",LOAI_GIAYTO_CHA_MTH:"Loại giấy tờ cha",SO_CCCD_CHA_MTH:"Số CCCD cha",NGAYCAP_CCCD_CHA_MTH:"Ngày cấp CCCD cha",NOICAP_CCCD_CHA_MTH:"Nơi cấp CCCD cha"};
+const S=[
+["Thông tin giấy chứng sinh",["MA_GCS","SO_SERI","SO","QUYEN_SO","NGAY_CT","CAP_LAN_DAU","MA_BN","MA_CT","THU_TRUONG_DVI","MA_TTDV","NGUOI_DO_DE","NGUOI_GHI_PHIEU","GHI_CHU"]],
+["Thông tin con",["TEN_CON","GIOI_TINH_CON","NGAY_SINH_CON","CAN_NANG_CON","NOI_SINH_CON","TINH_TRANG_CON","SO_CON","SO_CON_SONG","LAN_SINH","SINHCON_PHAUTHUAT","SINHCON_DUOI32TUAN","MA_THE_TAM"]],
+["Mẹ (MTH)",["HOTEN_MTH","NGAYSINH_MTH","MA_BHXH_MTH","MA_THE_MTH","MA_DANTOC_MTH","MA_QUOCTICH_MTH","LOAI_GIAYTO_MTH","SO_CCCD_MTH","NGAYCAP_CCCD_MTH","NOICAP_CCCD_MTH","NOI_CU_TRU_MTH","MATINH_CU_TRU_MTH","MAXA_CU_TRU_MTH"]],
+["Cha của mẹ (MTH)",["HO_TEN_CHA_MTH","NGAYSINH_CHA_MTH","MA_DANTOC_CHA_MTH","LOAI_GIAYTO_CHA_MTH","SO_CCCD_CHA_MTH","NGAYCAP_CCCD_CHA_MTH","NOICAP_CCCD_CHA_MTH","NOI_CU_TRU_CHA_MTH","MATINH_CU_TRU_CHA_MTH","MAXA_CU_TRU_CHA_MTH"]],
+["Người nuôi dưỡng (NND)",["HOTEN_NND","NGAYSINH_NND","MA_BHXH_NND","MA_THE_NND","MA_DANTOC_NND","MA_QUOCTICH_NND","LOAI_GIAYTO_NND","SO_CCCD_NND","NGAYCAP_CCCD_NND","NOICAP_CCCD_NND","NOI_CU_TRU_NND","MATINH_CU_TRU","MAHUYEN_CU_TRU","MAXA_CU_TRU"]],
+["Cha của người nuôi dưỡng (NND)",["HO_TEN_CHA","NGAYSINH_CHA_NND","MA_DANTOC_CHA_NND","LOAI_GIAYTO_CHA_NND","SO_CCCD_CHA_NND","NGAYCAP_CCCD_CHA_NND","NOICAP_CCCD_CHA_NND"]]];
+const known=new Set(S.flatMap(s=>s[1]));
+const $=id=>document.getElementById(id),esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+function fmt(k,v){
+ if(!v)return"";
+ if(/^\d{8}$/.test(v)&&/NGAY/.test(k))return v.slice(6)+"/"+v.slice(4,6)+"/"+v.slice(0,4);
+ if(/^\d{14}$/.test(v))return v.slice(8,10)+":"+v.slice(10,12)+" ngày "+v.slice(6,8)+"/"+v.slice(4,6)+"/"+v.slice(0,4);
+ if(k=="GIOI_TINH_CON")return v+(v=="1"?" (Nam)":v=="2"?" (Nữ)":"");
+ return v}
+let docs=[];
+function render(i){
+ const d=docs[i].doc,g=d.getElementsByTagName("GIAYCHUNGSINH")[0],out=$("out");
+ if(!g){out.innerHTML="<section><h2>Không phải file giấy chứng sinh</h2><table><tr><td>Không tìm thấy thẻ GIAYCHUNGSINH.</td></tr></table></section>";return}
+ const m={};[...g.children].forEach(c=>m[c.localName]=c.textContent.trim());
+ const row=(k,v)=>`<tr><td>${L[k]||k}</td><td>${esc(fmt(k,v))||"<span style='color:#aaa'>(trống)</span>"}</td></tr>`;
+ let h=S.map(([t,ks])=>`<section><h2>${t}</h2><table>${ks.filter(k=>m[k]).map(k=>row(k,m[k])).join("")}</table></section>`).filter((x,i)=>S[i][1].some(k=>m[k])).join("");
+ const o=Object.keys(m).filter(k=>!known.has(k)&&m[k]);
+ if(o.length)h+=`<section><h2>Trường khác</h2><table>${o.map(k=>row(k,m[k])).join("")}</table></section>`;
+ const sig=d.getElementsByTagName("Signature").length,st=d.getElementsByTagName("SigningTime")[0];
+ h+=`<section><h2>Chữ ký số</h2><table><tr><td>Số chữ ký trong file</td><td class="${sig?'ok':'warn'}">${sig||"Không có chữ ký"}</td></tr>${st?`<tr><td>Thời gian ký</td><td>${esc(st.textContent)}</td></tr>`:""}<tr><td>Lưu ý</td><td style="font-weight:400">Trang này chỉ hiển thị nội dung, không xác thực chữ ký.</td></tr></table></section>`;
+ out.innerHTML=`<div class="ptitle"><b>GIẤY CHỨNG SINH</b><small>${esc(docs[i].name)}</small></div>`+h;filter()}
+function filter(){
+ const q=$("q").value.trim().toLowerCase();
+ document.querySelectorAll("#out tr").forEach(r=>r.classList.toggle("hide",q&&!r.textContent.toLowerCase().includes(q)))}
+async function load(files){
+ docs=[];
+ for(const f of files){
+  const t=await f.text(),d=new DOMParser().parseFromString(t,"application/xml");
+  if(d.getElementsByTagName("parsererror").length){docs.push({name:f.name+" (lỗi XML)",doc:document.implementation.createDocument("","x")});continue}
+  docs.push({name:f.name,doc:d})}
+ if(!docs.length)return;
+ const s=$("sel");s.innerHTML=docs.map((d,i)=>`<option value="${i}">${esc(d.name)}</option>`).join("");
+ s.style.display=docs.length>1?"":"none";$("q").style.display=$("pr").style.display="";
+ render(0)}
+const dz=$("drop");
+dz.onclick=()=>$("f").click();
+$("f").onchange=e=>load(e.target.files);
+dz.ondragover=e=>{e.preventDefault();dz.classList.add("on")};
+dz.ondragleave=()=>dz.classList.remove("on");
+dz.ondrop=e=>{e.preventDefault();dz.classList.remove("on");load(e.dataTransfer.files)};
+$("sel").onchange=e=>render(+e.target.value);
+$("q").oninput=filter;
+</script></body></html>
